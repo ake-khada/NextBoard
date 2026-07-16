@@ -93,6 +93,10 @@ android {
         }
     }
 
+    androidResources {
+        noCompress += "nwlm"
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
