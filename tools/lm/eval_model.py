@@ -12,11 +12,13 @@ import sys
 from build_model import (
     BOS_CONTEXT,
     CONTEXT_SEPARATOR,
+    DEFAULT_SPLIT_SEED,
     MAGIC,
     TABLE_ENTRY_SIZE,
     TINY_SENTENCES,
     VERSION,
     iter_corpus_sentences,
+    is_held_out,
     normalize_key,
     tokenize_sentences,
     xxhash64,
@@ -125,9 +127,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--tiny", action="store_true", help="evaluate against the builder's embedded fixture sentences")
     parser.add_argument("--sentences", type=int, default=50_000, help="held-out sentence count")
     parser.add_argument("--skip-sentences", type=int, default=0)
+    parser.add_argument("--holdout-modulus", type=int, help="evaluate the fixed-seed 1/N sentence partition")
+    parser.add_argument("--split-seed", type=int, default=DEFAULT_SPLIT_SEED)
     args = parser.parse_args(argv)
     if args.sentences <= 0 or args.skip_sentences < 0:
         parser.error("sentence counts must be positive")
+    if args.holdout_modulus is not None and args.holdout_modulus < 2:
+        parser.error("--holdout-modulus must be at least 2")
+    if args.holdout_modulus is not None and args.skip_sentences:
+        parser.error("--holdout-modulus cannot be combined with --skip-sentences")
     if args.tiny and args.corpus:
         parser.error("--tiny cannot be combined with --corpus")
     if not args.tiny and not args.corpus:
@@ -152,8 +160,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.tiny
         else iter_corpus_sentences(args.corpus)
     )
-    for sentence in sentences:
-        if skipped < args.skip_sentences:
+    for source_index, sentence in enumerate(sentences):
+        if args.holdout_modulus is not None and not is_held_out(
+            source_index, args.holdout_modulus, args.split_seed
+        ):
+            continue
+        if args.holdout_modulus is None and skipped < args.skip_sentences:
             skipped += 1
             continue
         if sentence_count >= args.sentences:

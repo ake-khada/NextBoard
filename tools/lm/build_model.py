@@ -25,6 +25,7 @@ MAX_CANDIDATES = 4
 TABLE_ENTRY_SIZE = 13
 MAX_HASH_LOAD = 0.7
 MASK64 = (1 << 64) - 1
+DEFAULT_SPLIT_SEED = 0x4E574C4D
 
 PRIME64_1 = 11400714785074694791
 PRIME64_2 = 14029467366897019727
@@ -134,6 +135,17 @@ def normalize_surface(token: str) -> str:
     return token.replace("\u2019", "'")
 
 
+def splitmix64(value: int) -> int:
+    value = (value + 0x9E3779B97F4A7C15) & MASK64
+    value = ((value ^ (value >> 30)) * 0xBF58476D1CE4E5B9) & MASK64
+    value = ((value ^ (value >> 27)) * 0x94D049BB133111EB) & MASK64
+    return (value ^ (value >> 31)) & MASK64
+
+
+def is_held_out(sentence_index: int, modulus: int, seed: int) -> bool:
+    return splitmix64(sentence_index + seed) % modulus == 0
+
+
 def tokenize_sentences(text: str) -> Iterator[list[str]]:
     text = html.unescape(HTML_TAG_RE.sub(" ", text))
     for fragment in SENTENCE_SPLIT_RE.split(text):
@@ -162,6 +174,8 @@ def count_ngrams(
     language: str,
     skip_sentences: int,
     max_sentences: int | None,
+    holdout_modulus: int | None,
+    split_seed: int,
 ) -> tuple[
     dict[str, Counter[str]],
     dict[str, Counter[str]],
@@ -177,6 +191,8 @@ def count_ngrams(
     consumed = 0
 
     for sentence_index, sentence in enumerate(sentences):
+        if holdout_modulus is not None and is_held_out(sentence_index, holdout_modulus, split_seed):
+            continue
         if sentence_index < skip_sentences:
             continue
         if max_sentences is not None and consumed >= max_sentences:
@@ -212,16 +228,18 @@ def quantize_score(count: int, total: int) -> int:
 
 
 def select_contexts(
-    counts: dict[str, Counter[str]], threshold: int
+    counts: dict[str, Counter[str]], candidate_threshold: int, context_threshold: int
 ) -> dict[str, list[tuple[str, int]]]:
     selected: dict[str, list[tuple[str, int]]] = {}
     for context in sorted(counts, key=lambda value: value.encode("utf-8")):
         candidates = counts[context]
+        if max(candidates.values()) < context_threshold:
+            continue
         total = sum(candidates.values())
         kept = [
             (word, quantize_score(count, total), count)
             for word, count in candidates.items()
-            if count >= threshold
+            if count >= candidate_threshold
         ]
         kept.sort(key=lambda item: (-item[2], item[0].encode("utf-8")))
         if kept:
@@ -259,21 +277,23 @@ def prune_to_size(
     trigram_threshold: int,
     max_bytes: int,
 ) -> tuple[dict[str, list[tuple[str, int]]], int, int]:
+    bigram_context_threshold = bigram_threshold
+    trigram_context_threshold = trigram_threshold
     while True:
-        selected_bigrams = select_contexts(bigrams, bigram_threshold)
-        selected_trigrams = select_contexts(trigrams, trigram_threshold)
+        selected_bigrams = select_contexts(bigrams, bigram_threshold, bigram_context_threshold)
+        selected_trigrams = select_contexts(trigrams, trigram_threshold, trigram_context_threshold)
         overlap = selected_bigrams.keys() & selected_trigrams.keys()
         if overlap:
             raise ValueError(f"context encoding overlap: {min(overlap)!r}")
         contexts = {**selected_bigrams, **selected_trigrams}
         if estimated_size(language, contexts) <= max_bytes:
-            return contexts, bigram_threshold, trigram_threshold
+            return contexts, bigram_context_threshold, trigram_context_threshold
         if not contexts:
             raise ValueError("model cannot fit the requested size")
         if len(selected_trigrams) >= len(selected_bigrams):
-            trigram_threshold += 1
+            trigram_context_threshold += 1
         else:
-            bigram_threshold += 1
+            bigram_context_threshold += 1
 
 
 def write_u24(output: BinaryIO, value: int) -> None:
@@ -370,6 +390,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--output", type=Path, help="output .nwlm path")
     parser.add_argument("--tiny", action="store_true", help="build the deterministic built-in test fixture")
     parser.add_argument("--skip-sentences", type=int, default=0, help="reserve a deterministic corpus prefix for evaluation")
+    parser.add_argument("--holdout-modulus", type=int, help="exclude a fixed-seed 1/N sentence partition for evaluation")
+    parser.add_argument("--split-seed", type=int, default=DEFAULT_SPLIT_SEED)
     parser.add_argument("--max-sentences", type=int, help="maximum training sentences after the skipped prefix")
     parser.add_argument("--bigram-threshold", type=int, default=8)
     parser.add_argument("--trigram-threshold", type=int, default=4)
@@ -388,6 +410,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             parser.error(f"--{name.replace('_', '-')} must be non-negative")
     if args.max_sentences is not None and args.max_sentences <= 0:
         parser.error("--max-sentences must be positive")
+    if args.holdout_modulus is not None and args.holdout_modulus < 2:
+        parser.error("--holdout-modulus must be at least 2")
+    if args.holdout_modulus is not None and args.skip_sentences:
+        parser.error("--holdout-modulus cannot be combined with --skip-sentences")
     return args
 
 
@@ -417,6 +443,8 @@ def main(argv: list[str] | None = None) -> int:
         args.lang,
         args.skip_sentences,
         args.max_sentences,
+        args.holdout_modulus,
+        args.split_seed,
     )
     if sentence_count == 0:
         raise ValueError("no training sentences were read")
@@ -441,8 +469,8 @@ def main(argv: list[str] | None = None) -> int:
         f"table_size={table_size}"
     )
     print(
-        f"bigram_threshold={final_bigram_threshold} "
-        f"trigram_threshold={final_trigram_threshold} bytes={args.output.stat().st_size}"
+        f"bigram_admission_threshold={final_bigram_threshold} "
+        f"trigram_admission_threshold={final_trigram_threshold} bytes={args.output.stat().st_size}"
     )
     return 0
 
