@@ -85,3 +85,31 @@ Model SHA-256 values are:
 
 - Real-device typing quality, suggestion selection, backspace behavior after accepting a prediction, sentence-start presentation, and gesture-adjacent behavior still require the human checks mandated by `AGENTS.md`. No scripted taps or swipes were used and no real-device quality claim is made.
 - The large OpenSubtitles snapshots remain outside Git by design. Rebuilding the production assets requires reacquiring the two documented archives and reproducing the documented snapshot prefixes.
+
+## 2026-07-16 — Debug-signed minified release validation
+
+### Completed
+
+- Added the sanctioned debug signing configuration to `buildTypes.release` and documented it as the third permitted existing-file change in `AGENTS.md`. Commit: `5c28458b` (`Enable locally signed release builds`).
+- Ran `./gradlew :app:assembleRelease`; the R8-minified release build completed successfully in 1 minute 21 seconds. No R8 breakage was found, so no ProGuard keep file or keep rule was added.
+- Installed the release package on `emulator-5554` through isolated ADB port 5038 and left it selected. The application ID is `helium314.keyboard`; Android reports the flattened IME ID as `helium314.keyboard/.latin.LatinIME`, equivalent to the full component `helium314.keyboard/helium314.keyboard.latin.LatinIME`. The disposable debug and field-test packages were uninstalled afterward, leaving only the release package.
+
+### Artifact
+
+- APK: `app/build/outputs/apk/release/HeliBoard_4.0-release.apk`
+- Size: 30,617,290 bytes
+- SHA-256: `75f3781ade89ecb47c7111b4c468a71ce86981ba483874d35253b580dffb2c9f`
+- `apksigner verify --verbose --print-certs` passed. The APK has v1 and v2 signatures from `C=US, O=Android, CN=Android Debug`; all three `.nwlm` assets remain stored uncompressed.
+- This certificate is only for local human device testing. A real release keystore must replace the debug signing configuration before any public distribution.
+
+### Release validation evidence
+
+- Cold release model mappings were en 0.197 ms, fr 0.184 ms, and ru 0.139 ms, all below the 10 ms gate.
+- Visible release probes produced `be / a / do` for `I want to`, `vous / te / le` for `je vais`, and `сказать / чтобы / знать` for `я хочу`.
+- A controlled normal-text field mapped the English model in 0.200 ms. Fresh release processes in email (`TYPE_TEXT_VARIATION_EMAIL_ADDRESS`), URI (`TYPE_TEXT_VARIATION_URI`), and password (`TYPE_TEXT_VARIATION_PASSWORD`) fields produced no `NextWord` model-load marker, confirming suppression before the model is opened.
+- A shell key-event sequence typed `hello world`, exercised backspace and retyping, committed another space, and pressed Enter. The release model mapped in 0.172 ms and there were no `AndroidRuntime` errors. The en/fr/ru probes and all field checks likewise completed without an `AndroidRuntime` error.
+- Temporary field-host source and its test APK were removed after validation; they are not part of the repository diff or installed device state.
+
+### Open risks and human validation
+
+- Real-device typing quality, suggestion selection, backspace behavior after accepting a prediction, sentence-start presentation, and gesture-adjacent behavior still require the human checks mandated by `AGENTS.md`. This debug-signed release artifact is ready for that local device testing, but it is not suitable for public distribution.
