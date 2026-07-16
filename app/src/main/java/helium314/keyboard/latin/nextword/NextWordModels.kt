@@ -5,6 +5,8 @@ import android.content.Context
 import helium314.keyboard.latin.NgramContext
 import helium314.keyboard.latin.SuggestedWords.SuggestedWordInfo
 import helium314.keyboard.latin.dictionary.Dictionary
+import helium314.keyboard.latin.settings.Settings
+import helium314.keyboard.latin.utils.InputTypeUtils
 import helium314.keyboard.latin.utils.Log
 import java.io.IOException
 import java.util.Locale
@@ -23,6 +25,11 @@ object NextWordModels {
     private val sourceDictionary = Dictionary.PhonyDictionary(TYPE_NEXT_WORD)
 
     fun getSuggestions(context: Context, locale: Locale, ngramContext: NgramContext): List<SuggestedWordInfo> {
+        Settings.getValues()?.mInputAttributes?.let { inputAttributes ->
+            if (inputAttributes.mIsPasswordField || InputTypeUtils.isUriOrEmailType(inputAttributes.mInputType)) {
+                return emptyList()
+            }
+        }
         val language = locale.language.lowercase(Locale.ROOT)
         val model = getModel(context, language) ?: return emptyList()
         return model.predict(ngramContext, locale).map { candidate ->
