@@ -30,7 +30,7 @@ adb logcat -s NextWord:V AndroidRuntime:E
 ```
 
 ## Hard rules
-1. Diff surface to existing files is exactly two, per spec: one guarded block in `app/src/main/java/helium314/keyboard/latin/DictionaryFacilitatorImpl.kt`, and `noCompress += "nwlm"` in `app/build.gradle.kts`. Everything else is new files under `.../latin/nextword/`, `app/src/main/assets/nextword/`, and `tools/lm/`.
+1. Diff surface to existing implementation files is exactly three changes: one guarded block in `app/src/main/java/helium314/keyboard/latin/DictionaryFacilitatorImpl.kt`, `noCompress += "nwlm"` in `app/build.gradle.kts`, and `signingConfig = signingConfigs.getByName("debug")` inside `buildTypes.release`. The release signing line exists only for locally testable release builds and must be replaced by a real keystore before any public distribution. Everything else is new files under `.../latin/nextword/`, `app/src/main/assets/nextword/`, and `tools/lm/`.
 2. Never add the INTERNET permission or any network-touching dependency. Never add ONNX, TF, llama.cpp, or any native code.
 3. Never modify autocorrect behavior. Predictions are `KIND_PREDICTION` only.
 4. One fix per commit, small commits, imperative messages. Never run `git push`, `git fetch origin`, or any credentialed Git command; `origin` is reserved for the human's manual publishing workflow. Never rewrite history on `nextword` — no rebase, no `git commit --amend`, no reset of committed work. Treat every commit as published the moment it is made; if a commit was wrong, fix it with a new commit.
