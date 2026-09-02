@@ -11,11 +11,19 @@ import helium314.keyboard.latin.utils.Log
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
+
+private const val STATIC_SCORE_CEILING = 96
+
+internal fun scoreNextWordCandidate(modelScore: Int, localeWeight: Float): Int {
+    val scoreInStaticBand = (modelScore * STATIC_SCORE_CEILING / 255).coerceAtLeast(1)
+    val safeLocaleWeight = if (localeWeight.isFinite()) localeWeight.coerceIn(0f, 1f) else 1f
+    return (scoreInStaticBand * safeLocaleWeight).roundToInt().coerceAtLeast(1)
+}
 
 object NextWordModels {
     private const val TAG = "NextWord"
     private const val ASSET_DIRECTORY = "nextword"
-    private const val STATIC_SCORE_CEILING = 96
     private const val TYPE_NEXT_WORD = "nextword"
 
     private val supportedLanguages = setOf("en", "fr", "ru")
@@ -24,7 +32,12 @@ object NextWordModels {
     private val loadLock = Any()
     private val sourceDictionary = Dictionary.PhonyDictionary(TYPE_NEXT_WORD)
 
-    fun getSuggestions(context: Context, locale: Locale, ngramContext: NgramContext): List<SuggestedWordInfo> {
+    fun getSuggestions(
+        context: Context,
+        locale: Locale,
+        ngramContext: NgramContext,
+        localeWeight: Float
+    ): List<SuggestedWordInfo> {
         Settings.getValues()?.mInputAttributes?.let { inputAttributes ->
             if (inputAttributes.mIsPasswordField || InputTypeUtils.isUriOrEmailType(inputAttributes.mInputType)) {
                 return emptyList()
@@ -36,7 +49,7 @@ object NextWordModels {
             SuggestedWordInfo(
                 candidate.word,
                 "",
-                (candidate.score * STATIC_SCORE_CEILING / 255).coerceAtLeast(1),
+                scoreNextWordCandidate(candidate.score, localeWeight),
                 SuggestedWordInfo.KIND_PREDICTION,
                 sourceDictionary,
                 SuggestedWordInfo.NOT_AN_INDEX,

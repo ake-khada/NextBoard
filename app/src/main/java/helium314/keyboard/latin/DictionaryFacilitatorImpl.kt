@@ -559,7 +559,7 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
         val context = Settings.getCurrentContext()
         if (composedData.mTypedWord.isEmpty() && context != null) {
             helium314.keyboard.latin.nextword.NextWordModels
-                .getSuggestions(context, dictGroup.locale, ngramContext)
+                .getSuggestions(context, dictGroup.locale, ngramContext, weightForLocale)
                 .filterNot { isBlacklisted(it.word) || SupportedEmojis.isUnsupported(it.word) }
                 .forEach(suggestions::add)
         }
