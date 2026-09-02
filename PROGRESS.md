@@ -113,3 +113,55 @@ Model SHA-256 values are:
 ### Open risks and human validation
 
 - Real-device typing quality, suggestion selection, backspace behavior after accepting a prediction, sentence-start presentation, and gesture-adjacent behavior still require the human checks mandated by `AGENTS.md`. This debug-signed release artifact is ready for that local device testing, but it is not suitable for public distribution.
+
+## 2026-09-02 — HeliBoard 4.1, NextBoard styling, branding, and multilingual ranking
+
+### Completed
+
+- Merged the stable upstream HeliBoard `v4.1` tag (`9f5bb635`) into `nextword` without conflicts. The merge retains the offline next-word implementation while taking the upstream fixes, translations, dependency updates, and version bump to 4.1.
+- Added a fourth keyboard style named NextBoard. It uses 7 dp rounded keys, restrained inter-key spacing, and distinct functional and action-key colors. It is the default for fresh installations; the three upstream styles remain available.
+- Replaced the visible application identity with NextBoard: launcher and application labels, settings base strings, debug labels, APK filenames, store titles, README identity, and a new indigo-to-teal predictive-keyboard launcher icon. The application ID remains `helium314.keyboard` so this locally signed build can update the previous field-test installation without losing settings.
+- Improved multilingual next-word integration by applying HeliBoard's existing active-language weight to static prediction scores. This makes predictions from the currently active language win more reliably when multilingual dictionaries are enabled, while preserving model order in a single-language setup and keeping predictions below personalized-history scores.
+- Expanded `AGENTS.md` only to record the user-approved product customization paths and physical-device policy. A physical device remains allowed only if it appears on the isolated ADB port 5038; port 5037 was not inspected or touched.
+
+### Commits
+
+- `ca058d29` — merge HeliBoard 4.1
+- `171d7d28` — add modern NextBoard keyboard style
+- `9a51ac7b` — brand app as NextBoard
+- `7c067962` — weight predictions by active language
+- `ec76cc93` — document product customization scope
+
+### Validation evidence
+
+- `./gradlew :app:clean :app:assembleDebug` completed successfully. The focused JVM suite passed all seven tests: four `.nwlm` reader tests and three new locale-score tests, with zero failures or errors.
+- The debug APK installed and activated on `emulator-5554`. Cold model mappings were en 0.447 ms, fr 2.975 ms, and ru 1.829 ms, all below the 10 ms gate. A shell key-event smoke sequence completed without an `AndroidRuntime` error.
+- Emulator visual checks confirmed the NextBoard launcher/settings identity and the new rounded keyboard layout. The suggestion strip itself was intentionally left unchanged; the visual work applies to the keyboard keys and surface.
+- `./gradlew :app:assembleRelease` completed successfully in 1 minute 14 seconds, including R8 and release lint. The resulting release APK installed in place, the release IME activated, English mapped in 0.169 ms, and another key-event smoke sequence produced no `AndroidRuntime` error.
+- The release manifest identifies `helium314.keyboard`, version 4.1 (`versionCode` 4101), label `NextBoard`, and contains no `INTERNET` permission. All three `.nwlm` assets are stored uncompressed.
+
+### Production evaluation
+
+The model assets and their deterministic build inputs did not change, so the previously measured held-out results remain current:
+
+| Language | Top-1 | Top-3 | Coverage | Gate |
+| --- | ---: | ---: | ---: | --- |
+| en | 16.6249% | 28.4482% | 97.9656% | pass (>= 28%) |
+| fr | 15.7507% | 27.3222% | 97.5323% | pass (>= 22%) |
+| ru | 13.8996% | 23.1018% | 94.6575% | pass (>= 22%) |
+
+### USB field-test artifact
+
+- APK: `app/build/outputs/apk/release/NextBoard_4.1-release.apk`
+- Size: 30,834,403 bytes
+- SHA-256: `95525119f872a39e292e8474276e9fcfd19a0b20730053a30e9bd58b493fc141`
+- `apksigner verify --verbose --print-certs` passed with v1 and v2 signatures from the same Android debug certificate used for the previous local release (`C=US, O=Android, CN=Android Debug`; certificate SHA-256 `95f234cc6bcbe57e2aabbe5c81f18fab9fc3d934cde5441f6458eada4a7cf3d7`). This is for local testing only and must be replaced with a real release keystore before public distribution.
+
+### Open risks and human validation
+
+- The physical Pixel was not visible on the isolated ADB port 5038. Per the environment boundary, the agent did not access the other project's port 5037. The APK is prepared for the human to install through their existing local USB ADB session with `adb install -r`, which preserves app data when the installed certificate matches.
+- Android will reject an in-place update if the phone has an APK signed by a different certificate. Do not uninstall in response without first deciding whether losing that installation's settings is acceptable.
+- Existing installations keep their chosen keyboard style. Select **Settings > Appearance > Keyboard style > NextBoard** to try the new layout; fresh installations select it by default.
+- Some translated explanatory settings strings still contain the upstream HeliBoard name. The universally visible application/launcher label and store titles say NextBoard; a future translation pass can replace grammatical references safely instead of mechanically editing every locale.
+- Namespace and component identifiers intentionally remain under `helium314.keyboard` for update compatibility and a small upstream diff. README attribution to the HeliBoard project is retained.
+- Real-device typing quality, suggestion selection, backspace behavior after accepting a prediction, sentence-start presentation, and gesture behavior still require human validation. The emulator smoke sequences are functional checks only and are not claimed as typing-quality validation.
