@@ -703,6 +703,7 @@ New dictionary:
     <string name="icon_style">Icon style</string>
     <!-- Style name for Rounded style -->
     <string name="style_name_Rounded" tools:keep="@string/style_name_Rounded">Rounded</string>
+    <string name="style_name_NextBoard" translatable="false" tools:keep="@string/style_name_NextBoard">NextBoard</string>
     <!-- Option for choosing colors -->
     <string name="theme_colors">Colors</string>
     <!-- Option for choosing colors for night mode -->

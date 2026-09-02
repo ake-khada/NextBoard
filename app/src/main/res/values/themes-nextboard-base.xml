@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<resources>
+    <fraction name="config_key_horizontal_gap_nextboard">1.35%p</fraction>
+    <fraction name="config_key_vertical_gap_nextboard">4.2%p</fraction>
+
+    <style name="KeyboardTheme.NextBoard_Base" parent="KeyboardTheme.Rounded_Base">
+        <item name="keyboardStyle">@style/Keyboard.NextBoard_Base</item>
+        <item name="keyboardViewStyle">@style/KeyboardView.NextBoard_Base</item>
+        <item name="mainKeyboardViewStyle">@style/MainKeyboardView.NextBoard_Base</item>
+        <item name="emojiPalettesViewStyle">@style/EmojiPalettesView.NextBoard_Base</item>
+        <item name="clipboardHistoryViewStyle">@style/ClipboardHistoryView.NextBoard_Base</item>
+        <item name="popupKeysKeyboardStyle">@style/PopupKeysKeyboard.NextBoard_Base</item>
+        <item name="popupKeysKeyboardViewStyle">@style/PopupKeysKeyboardView.NextBoard_Base</item>
+        <item name="popupKeysKeyboardViewForActionStyle">@style/PopupKeysKeyboardView.NextBoard_Base.Action</item>
+    </style>
+
+    <style name="Keyboard.NextBoard_Base" parent="Keyboard.Rounded_Base">
+        <item name="themeId">NextBoardBase</item>
+        <item name="horizontalGap">@fraction/config_key_horizontal_gap_nextboard</item>
+        <item name="verticalGap">@fraction/config_key_vertical_gap_nextboard</item>
+    </style>
+
+    <style name="KeyboardView.NextBoard_Base" parent="KeyboardView.Rounded_Base">
+        <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+    </style>
+
+    <style name="MainKeyboardView.NextBoard_Base" parent="MainKeyboardView.Rounded_Base">
+        <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+    </style>
+
+    <style name="EmojiPalettesView.NextBoard_Base" parent="EmojiPalettesView.Rounded_Base">
+        <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+    </style>
+
+    <style name="ClipboardHistoryView.NextBoard_Base" parent="ClipboardHistoryView.Rounded_Base">
+        <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
+    </style>
+
+    <style name="PopupKeysKeyboard.NextBoard_Base" parent="PopupKeysKeyboard.Rounded_Base">
+        <item name="themeId">NextBoardBase</item>
+    </style>
+
+    <style name="PopupKeysKeyboardView.NextBoard_Base" parent="PopupKeysKeyboardView.Rounded_Base">
+        <item name="keyBackground">@drawable/btn_keyboard_key_popup_nextboard</item>
+    </style>
+
+    <style name="PopupKeysKeyboardView.NextBoard_Base.Action" parent="PopupKeysKeyboardView.Rounded_Base.Action">
+        <item name="keyBackground">@drawable/btn_keyboard_key_popup_nextboard</item>
+    </style>
+
+    <style name="KeyboardTheme.NextBoard_Base_Border" parent="KeyboardTheme.NextBoard_Base">
+        <item name="keyboardStyle">@style/Keyboard.NextBoard_Base_Border</item>
+        <item name="popupKeysKeyboardStyle">@style/PopupKeysKeyboard.NextBoard_Base_Border</item>
+    </style>
+
+    <style name="Keyboard.NextBoard_Base_Border" parent="Keyboard.NextBoard_Base">
+        <item name="themeId">NextBoardBaseBorder</item>
+    </style>
+
+    <style name="PopupKeysKeyboard.NextBoard_Base_Border" parent="PopupKeysKeyboard.NextBoard_Base">
+        <item name="themeId">NextBoardBaseBorder</item>
+    </style>
+</resources>

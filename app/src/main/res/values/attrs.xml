@@ -196,6 +196,8 @@
             <enum name="LXXBaseBorder" value="2" />
             <enum name="RoundedBase" value="3" />
             <enum name="RoundedBaseBorder" value="4" />
+            <enum name="NextBoardBase" value="5" />
+            <enum name="NextBoardBaseBorder" value="6" />
         </attr>
         <!-- Touch position correction -->
         <attr name="touchPositionCorrectionData" format="reference" />
