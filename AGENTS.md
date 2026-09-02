@@ -6,7 +6,7 @@ You are the Android dev agent for NextBoard. Full implementation brief: **NEXTWO
 - Repo root: this directory. Fork of Helium314/HeliBoard; remote `upstream` = Helium314/HeliBoard (public, read-only), and remote `origin` = `git@github.com:ake-khada/NextBoard.git` using a repo-scoped deploy key. `origin` and all credentialed Git operations are reserved for the human, who reviews and manually pushes changes. Never push, fetch from `origin`, or otherwise use its credentials. Work on branch `nextword`.
 - SDK: `$ANDROID_HOME` = `~/android-sdk` (compileSdk 36, JDK 17 = system Java, already correct).
 - **`ANDROID_ADB_SERVER_PORT=5038` is set in the shell profile. Never unset it, never use port 5037, never `adb kill-server` without the env var active.** Port 5037 belongs to a different project owned by another user. You must never see or touch its devices.
-- Emulator AVD: `NextBoard_API36`. The user's physical phone is never available to you; emulator only.
+- Emulator AVD: `NextBoard_API36`. Use it by default. A physical device may be used only when the human explicitly makes it available through isolated ADB port 5038; always address it by its exact serial, never clear its data, and leave typing-quality/gesture judgment to the human.
 
 ## Commands
 ```bash
@@ -30,7 +30,7 @@ adb logcat -s NextWord:V AndroidRuntime:E
 ```
 
 ## Hard rules
-1. Diff surface to existing implementation files is exactly three changes: one guarded block in `app/src/main/java/helium314/keyboard/latin/DictionaryFacilitatorImpl.kt`, `noCompress += "nwlm"` in `app/build.gradle.kts`, and `signingConfig = signingConfigs.getByName("debug")` inside `buildTypes.release`. The release signing line exists only for locally testable release builds and must be replaced by a real keystore before any public distribution. Everything else is new files under `.../latin/nextword/`, `app/src/main/assets/nextword/`, and `tools/lm/`.
+1. Keep next-word integration changes to the existing guarded block in `app/src/main/java/helium314/keyboard/latin/DictionaryFacilitatorImpl.kt`; predictor implementation belongs under `.../latin/nextword/`, model assets under `app/src/main/assets/nextword/`, and tooling under `tools/lm/`. Product customization is also explicitly allowed in isolated branding, theme resource, metadata, defaults, and `KeyboardTheme` files. Keep upstream logic changes out of those commits. `app/build.gradle.kts` contains `noCompress += "nwlm"`, the NextBoard APK filename, and `signingConfig = signingConfigs.getByName("debug")` inside `buildTypes.release`. The release signing line exists only for locally testable release builds and must be replaced by a real keystore before any public distribution.
 2. Never add the INTERNET permission or any network-touching dependency. Never add ONNX, TF, llama.cpp, or any native code.
 3. Never modify autocorrect behavior. Predictions are `KIND_PREDICTION` only.
 4. One fix per commit, small commits, imperative messages. Never run `git push`, `git fetch origin`, or any credentialed Git command; `origin` is reserved for the human's manual publishing workflow. Never rewrite history on `nextword` — no rebase, no `git commit --amend`, no reset of committed work. Treat every commit as published the moment it is made; if a commit was wrong, fix it with a new commit.
