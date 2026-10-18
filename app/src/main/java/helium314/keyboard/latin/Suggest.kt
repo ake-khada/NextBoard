@@ -38,7 +38,8 @@ import kotlin.math.min
 class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
     private var mAutoCorrectionThreshold = 0f
     private val mPlausibilityThreshold = 0f
-    private val nextWordSuggestionsCache = HashMap<NgramContext, SuggestionResults>()
+    // Display-only models must never enter the native context used for autocorrection.
+    private val nextWordSuggestionsCache = HashMap<Pair<NgramContext, Boolean>, SuggestionResults>()
 
     // cache cleared whenever LatinIME.loadSettings is called, notably on changing layout and switching input fields
     fun clearNextWordSuggestionsCache() = nextWordSuggestionsCache.clear()
@@ -76,7 +77,7 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
         val typedWordString = wordComposer.typedWord
         val resultsArePredictions = !wordComposer.isComposingWord
         val suggestionResults = if (typedWordString.isEmpty())
-                getNextWordSuggestions(ngramContext, keyboard, inputStyleIfNotPrediction, settingsValuesForSuggestion)
+                getNextWordSuggestions(ngramContext, keyboard, settingsValuesForSuggestion, includeNextWordModel = true)
             else mDictionaryFacilitator.getSuggestionResults(wordComposer.composedDataSnapshot, ngramContext, keyboard,
                 settingsValuesForSuggestion, SESSION_ID_TYPING, inputStyleIfNotPrediction)
         val trailingSingleQuotesCount = StringUtils.getTrailingSingleQuotesCount(typedWordString)
@@ -98,7 +99,7 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
             suggestionsContainer.firstOrNull(),
             {
                 val first = suggestionsContainer.firstOrNull() ?: suggestionResults.first()
-                val suggestions = getNextWordSuggestions(ngramContext, keyboard, inputStyleIfNotPrediction, settingsValuesForSuggestion)
+                val suggestions = getNextWordSuggestions(ngramContext, keyboard, settingsValuesForSuggestion)
                 val suggestionForFirstInContainer = suggestions.firstOrNull { it.mWord == first.word }
                 val suggestionForTypedWord = suggestions.firstOrNull { it.mWord == capitalizedTypedWord }
                 suggestionForFirstInContainer to suggestionForTypedWord
@@ -326,7 +327,7 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
         // modify inputType such in getSuggestedWordsForNonBatchInput.
         val pseudoTypedWordInfo = preferNextWordSuggestion(
             pseudoTypedWord, suggestionsContainer,
-            getNextWordSuggestions(ngramContext, keyboard, inputStyle, settingsValuesForSuggestion), rejected
+            getNextWordSuggestions(ngramContext, keyboard, settingsValuesForSuggestion), rejected
         )
         val suggestionsList = if (SuggestionStripView.DEBUG_SUGGESTIONS && suggestionsContainer.isNotEmpty()) {
             getSuggestionsInfoListWithDebugInfo(suggestionResults.first().mWord, suggestionsContainer)
@@ -352,13 +353,16 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
     }
 
     /** get suggestions based on the current ngram context, with an empty typed word (that's what next word suggestions do)  */
-    private fun getNextWordSuggestions(ngramContext: NgramContext, keyboard: Keyboard, inputStyle: Int,
-                                       settingsValuesForSuggestion: SettingsValuesForSuggestion): SuggestionResults {
-        val cachedResults = nextWordSuggestionsCache[ngramContext]
+    private fun getNextWordSuggestions(ngramContext: NgramContext, keyboard: Keyboard,
+                                       settingsValuesForSuggestion: SettingsValuesForSuggestion,
+                                       includeNextWordModel: Boolean = false): SuggestionResults {
+        val cacheKey = ngramContext to includeNextWordModel
+        val cachedResults = nextWordSuggestionsCache[cacheKey]
         if (cachedResults != null) return cachedResults
+        val inputStyle = if (includeNextWordModel) SuggestedWords.INPUT_STYLE_PREDICTION else SuggestedWords.INPUT_STYLE_TYPING
         val newResults = mDictionaryFacilitator.getSuggestionResults(ComposedData(InputPointers(1),
             false, ""), ngramContext, keyboard, settingsValuesForSuggestion, SESSION_ID_TYPING, inputStyle)
-        nextWordSuggestionsCache[ngramContext] = newResults
+        nextWordSuggestionsCache[cacheKey] = newResults
         return newResults
     }
 

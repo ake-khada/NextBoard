@@ -488,18 +488,20 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
     ): SuggestionResults {
         val proximityInfoHandle = keyboard.proximityInfo.nativeProximityInfo
         val weightOfLangModelVsSpatialModel = floatArrayOf(Dictionary.NOT_A_WEIGHT_OF_LANG_MODEL_VS_SPATIAL_MODEL)
+        val includeNextWordModel = inputStyle == SuggestedWords.INPUT_STYLE_PREDICTION
+            || inputStyle == SuggestedWords.INPUT_STYLE_BEGINNING_OF_SENTENCE_PREDICTION
 
         val waitForOtherDicts = if (dictionaryGroups.size == 1) null else CountDownLatch(dictionaryGroups.size - 1)
         val suggestionsArray = Array<List<SuggestedWordInfo>?>(dictionaryGroups.size) { null }
         for (i in 1..dictionaryGroups.lastIndex) {
             scope.launch {
                 suggestionsArray[i] = getSuggestions(composedData, ngramContext, settingsValuesForSuggestion, sessionId,
-                    proximityInfoHandle, weightOfLangModelVsSpatialModel, dictionaryGroups[i])
+                    proximityInfoHandle, weightOfLangModelVsSpatialModel, dictionaryGroups[i], includeNextWordModel)
                 waitForOtherDicts?.countDown()
             }
         }
         suggestionsArray[0] = getSuggestions(composedData, ngramContext, settingsValuesForSuggestion, sessionId,
-            proximityInfoHandle, weightOfLangModelVsSpatialModel, dictionaryGroups[0])
+            proximityInfoHandle, weightOfLangModelVsSpatialModel, dictionaryGroups[0], includeNextWordModel)
         val suggestionResults = SuggestionResults(
             SuggestedWords.MAX_SUGGESTIONS, ngramContext.isBeginningOfSentenceContext, false
         )
@@ -519,7 +521,8 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
     private fun getSuggestions(
         composedData: ComposedData, ngramContext: NgramContext,
         settingsValuesForSuggestion: SettingsValuesForSuggestion, sessionId: Int,
-        proximityInfoHandle: Long, weightOfLangModelVsSpatialModel: FloatArray, dictGroup: DictionaryGroup
+        proximityInfoHandle: Long, weightOfLangModelVsSpatialModel: FloatArray, dictGroup: DictionaryGroup,
+        includeNextWordModel: Boolean
     ): List<SuggestedWordInfo> {
         val suggestions = ArrayList<SuggestedWordInfo>()
         val weightForLocale = dictGroup.getWeightForLocale(dictionaryGroups, composedData.mIsBatchMode)
@@ -557,7 +560,7 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
             }
         }
         val context = Settings.getCurrentContext()
-        if (composedData.mTypedWord.isEmpty() && context != null) {
+        if (includeNextWordModel && composedData.mTypedWord.isEmpty() && !composedData.mIsBatchMode && context != null) {
             helium314.keyboard.latin.nextword.NextWordModels
                 .getSuggestions(context, dictGroup.locale, ngramContext, weightForLocale)
                 .filterNot { isBlacklisted(it.word) || SupportedEmojis.isUnsupported(it.word) }

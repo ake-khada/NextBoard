@@ -34,6 +34,8 @@ import java.util.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @Suppress("NonAsciiCharacters")
 @RunWith(RobolectricTestRunner::class)
@@ -62,6 +64,8 @@ class SuggestTest {
         tapTypingSuggestions = suggestionResults(emptyList())
         glideTypingSuggestions = suggestionResults(emptyList())
         nextWordSuggestions = suggestionResults(emptyList())
+        displayOnlyPredictions = suggestionResults(emptyList())
+        emptyLookupStyles.clear()
     }
 
     @Test fun `'on' to 'in' if 'in' was used before in this context`() {
@@ -324,6 +328,32 @@ class SuggestTest {
         ))
         val results = getSuggestedWords(false, "", CapsMode.OFF)
         assertEquals(listOf("next", "another"), results.mSuggestedWordInfoList.map { it.mWord })
+    }
+
+    @Test fun `cached display predictions cannot turn the into teh`() {
+        enableAutocorrect(confidenceModest)
+        tapTypingSuggestions = suggestionResults(listOf(suggestion("the", 1500000), suggestion("teh", 600000)))
+        displayOnlyPredictions = suggestionResults(listOf(suggestion("teh", 96)))
+
+        val displayed = getSuggestedWords(false, "", CapsMode.OFF)
+        assertEquals("teh", displayed.getWord(0))
+        assertFalse(displayed.mWillAutoCorrect)
+        val typing = getSuggestedWords(false, "the", CapsMode.OFF, clearCache = false)
+
+        assertFalse(typing.mWillAutoCorrect)
+        assertTrue(emptyLookupStyles.contains(SuggestedWords.INPUT_STYLE_PREDICTION))
+        assertTrue(emptyLookupStyles.any { it != SuggestedWords.INPUT_STYLE_PREDICTION })
+    }
+
+    @Test fun `native correction cache does not hide later display predictions`() {
+        enableAutocorrect(confidenceModest)
+        tapTypingSuggestions = suggestionResults(listOf(suggestion("the", 1500000), suggestion("teh", 600000)))
+        displayOnlyPredictions = suggestionResults(listOf(suggestion("next", 96)))
+        assertFalse(getSuggestedWords(false, "the", CapsMode.OFF).mWillAutoCorrect)
+
+        val displayed = getSuggestedWords(false, "", CapsMode.OFF, clearCache = false)
+        assertEquals("next", displayed.getWord(0))
+        assertFalse(displayed.mWillAutoCorrect)
     }
 
     @Test fun `single letter suggestions are suppressed dependent on score of other suggestions`() {
@@ -590,7 +620,7 @@ class SuggestTest {
         assertEquals(listOf("bur", "BUR", "BUT", "BIT", "BUY", "😢", "BUTTER"), result4.mSuggestedWordInfoList.map { it.mWord })
     }
 
-    private fun getSuggestedWords(gesture: Boolean, typedWord: String, capsMode: CapsMode): SuggestedWords {
+    private fun getSuggestedWords(gesture: Boolean, typedWord: String, capsMode: CapsMode, clearCache: Boolean = true): SuggestedWords {
         val wc = WordComposer()
         if (gesture) wc.setBatchInputPointers(InputPointers(1))
         if (typedWord.isNotEmpty()) {
@@ -615,7 +645,7 @@ class SuggestTest {
         params.GRID_WIDTH = 1
         params.mId = KeyboardLayoutSet.getFakeKeyboardId(elementId)
 
-        suggest.clearNextWordSuggestionsCache()
+        if (clearCache) suggest.clearNextWordSuggestionsCache()
         return suggest.getSuggestedWords(
             wc, NgramContext.EMPTY_PREV_WORDS_INFO, Keyboard(params), Settings.getValues().mSettingsValuesForSuggestion,
             Settings.getValues().mAutoCorrectEnabled, 0, 0
@@ -669,6 +699,8 @@ private var currentTypingLocale = Locale.ENGLISH
 private var tapTypingSuggestions = suggestionResults(emptyList())
 private var glideTypingSuggestions = suggestionResults(emptyList())
 private var nextWordSuggestions = suggestionResults(emptyList())
+private var displayOnlyPredictions = suggestionResults(emptyList())
+private val emptyLookupStyles = mutableListOf<Int>()
 
 fun suggestion(word: String, score: Int, locale: Locale = currentTypingLocale, shortcut: Boolean = false) =
     SuggestedWordInfo(
@@ -704,7 +736,11 @@ class ShadowFacilitator {
                              settingsValuesForSuggestion: SettingsValuesForSuggestion, sessionId: Int, inputStyle: Int
     ): SuggestionResults = when {
         composedData.mIsBatchMode -> glideTypingSuggestions
-        composedData.mTypedWord.isEmpty() -> nextWordSuggestions
+        composedData.mTypedWord.isEmpty() -> {
+            emptyLookupStyles.add(inputStyle)
+            suggestionResults(nextWordSuggestions.toList() + if (inputStyle == SuggestedWords.INPUT_STYLE_PREDICTION)
+                displayOnlyPredictions.toList() else emptyList())
+        }
         else -> tapTypingSuggestions
     }
 }
