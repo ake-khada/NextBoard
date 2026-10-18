@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<resources>
+    <string name="apply_nextboard_style">Применить стиль NextBoard</string>
+    <string name="nextboard_style_summary">Скруглённые клавиши с заливкой и выбором цветов</string>
+    <string name="nextboard_style_description">Включает стиль NextBoard и границы клавиш. Выберите цвета для светлой и тёмной темы. Настройки смены темы, раскладки и размеров сохраняются.</string>
+    <string name="nextboard_style_apply">Применить</string>
+    <string name="nextboard_style_preview">Форма и цвет клавиш</string>
+    <string name="nextboard_style_dark_preview">Предпросмотр тёмных цветов</string>
+    <string name="nextboard_style_tones">Цвета NextBoard</string>
+    <string name="nextboard_style_wallpaper">Цвета обоев</string>
+    <string name="nextboard_style_keep">Сохранить мои цвета</string>
+</resources>

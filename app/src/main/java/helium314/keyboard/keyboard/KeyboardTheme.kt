@@ -56,6 +56,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_DARKER = "darker"
         const val THEME_BLACK = "black"
         const val THEME_DYNAMIC = "dynamic"
+        const val THEME_NEXTBOARD = "nextboard"
         const val THEME_BLUE_GRAY = "blue_gray"
         const val THEME_BROWN = "brown"
         const val THEME_CHOCOLATE = "chocolate"
@@ -67,6 +68,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_SAND = "sand"
         const val THEME_VIOLETTE = "violette"
         fun getAvailableDefaultColors(prefs: SharedPreferences, isNight: Boolean) = listOfNotNull(
+            THEME_NEXTBOARD,
             if (!isNight) THEME_LIGHT else null, THEME_DARK,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) THEME_DYNAMIC else null,
             if (prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) == STYLE_HOLO) THEME_HOLO_WHITE else null,
@@ -150,10 +152,11 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
             return getThemeColors(themeName!!, themeStyle!!, context, prefs, isNight)
         }
 
-        private fun getThemeColors(themeName: String, themeStyle: String, context: Context, prefs: SharedPreferences, isNight: Boolean): Colors {
-            val hasBorders = prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS)
+        internal fun getThemeColors(themeName: String, themeStyle: String, context: Context, prefs: SharedPreferences,
+                                   isNight: Boolean, hasBorders: Boolean = prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS)): Colors {
             val backgroundImage = Settings.readUserBackgroundImage(context, isNight)
             return when (themeName) {
+                THEME_NEXTBOARD -> NextBoardStyle.colors(themeStyle, hasBorders, isNight, backgroundImage)
                 THEME_DYNAMIC -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) DynamicColors(context, themeStyle, hasBorders, backgroundImage)
                     else getThemeColors(THEME_LIGHT, themeStyle, context, prefs, isNight)

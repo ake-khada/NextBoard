@@ -2,6 +2,14 @@
 NextBoard is a privacy-conscious Android keyboard with fast, fully offline next-word prediction.
 It is a focused fork of [HeliBoard](https://github.com/HeliBorg/HeliBoard), based on AOSP / OpenBoard, and does not request internet access.
 
+## NextBoard appearance and predictions
+
+Open **Settings → Appearance → Apply NextBoard style** to preview and enable rounded filled keys. Choose NextBoard's light/dark tones, wallpaper colors on Android 12+, or keep your current colors. The action enables key borders so the shape is visible even on an existing installation. Key sizes, layouts, gestures, custom themes and the automatic day/night preference are preserved. The regular Style and Colors settings remain available.
+
+The NextBoard style uses tonal surfaces, rounded character keys and pill-shaped space/action keys in the existing keyboard renderer. Presses change tint immediately, without added motion or resizing. The dialog previews key shapes and colors; custom background images remain configured separately.
+
+English, French and Russian have bundled local dictionaries and static next-word models. Enable the languages in language settings and use the existing **Next word predictions** preference. Static predictions supplement the upstream dictionary/history engine and never commit text automatically. Their display cache is separate from the native context used for autocorrection. Model provenance, evaluation and limitations are documented in [the language-model tools](tools/lm/README.md). Mixed-script correction still depends on the active dictionary/layout; this update does not claim automatic English/French/Russian correction in every sentence.
+
 ## Table of Contents
 
 - [Features](#features)

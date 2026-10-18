@@ -45,6 +45,7 @@ import androidx.core.content.edit
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.FoldableUtils
 import helium314.keyboard.settings.dialogs.ThreeButtonAlertDialog
+import helium314.keyboard.settings.dialogs.NextBoardStyleDialog
 
 @Composable
 fun AppearanceScreen(
@@ -58,6 +59,7 @@ fun AppearanceScreen(
     val dayNightMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && prefs.getBoolean(Settings.PREF_THEME_DAY_NIGHT, Defaults.PREF_THEME_DAY_NIGHT)
     val items = listOf(
         R.string.settings_screen_theme,
+        SettingsWithoutKey.APPLY_NEXTBOARD_STYLE,
         Settings.PREF_THEME_STYLE,
         Settings.PREF_ICON_STYLE,
         Settings.PREF_ACCENT_SHIFTED_ICON,
@@ -103,6 +105,11 @@ fun AppearanceScreen(
 }
 
 fun createAppearanceSettings(context: Context) = listOf(
+    Setting(context, SettingsWithoutKey.APPLY_NEXTBOARD_STYLE, R.string.apply_nextboard_style, R.string.nextboard_style_summary) { setting ->
+        var show by rememberSaveable { mutableStateOf(false) }
+        Preference(name = setting.title, description = setting.description, onClick = { show = true })
+        if (show) NextBoardStyleDialog { show = false }
+    },
     Setting(context, Settings.PREF_THEME_STYLE, R.string.theme_style) { setting ->
         val ctx = LocalContext.current
         val prefs = ctx.prefs()

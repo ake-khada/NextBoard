@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="theme_name_nextboard" translatable="false" tools:keep="@string/theme_name_nextboard">NextBoard</string>
+    <string name="apply_nextboard_style">Apply NextBoard style</string>
+    <string name="nextboard_style_summary">Rounded filled keys and a choice of colors</string>
+    <string name="nextboard_style_description">Enables the NextBoard style and key borders. Choose colors for light and dark mode. Your day/night setting, layouts and sizes stay as configured.</string>
+    <string name="nextboard_style_apply">Apply</string>
+    <string name="nextboard_style_preview">Key shapes and colors</string>
+    <string name="nextboard_style_dark_preview">Preview dark colors</string>
+    <string name="nextboard_style_tones">NextBoard tones</string>
+    <string name="nextboard_style_wallpaper">Wallpaper colors</string>
+    <string name="nextboard_style_keep">Keep my colors</string>
+</resources>

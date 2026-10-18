@@ -68,6 +68,7 @@ private fun createSettings(context: Context) = createAboutSettings(context) + cr
         if (JniUtils.sHaveGestureLib) createGestureTypingSettings(context) else emptyList()
 
 object SettingsWithoutKey {
+    const val APPLY_NEXTBOARD_STYLE = "apply_nextboard_style"
     const val EDIT_PERSONAL_DICTIONARY = "edit_personal_dictionary"
     const val APP = "app"
     const val VERSION = "version"

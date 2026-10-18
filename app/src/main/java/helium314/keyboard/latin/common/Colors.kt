@@ -24,6 +24,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import helium314.keyboard.keyboard.KeyboardTheme.Companion.STYLE_HOLO
 import helium314.keyboard.keyboard.KeyboardTheme.Companion.STYLE_MATERIAL
+import helium314.keyboard.keyboard.KeyboardTheme.Companion.STYLE_NEXTBOARD
 import helium314.keyboard.latin.common.ColorType.*
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.utils.adjustLuminosityAndKeepAlpha
@@ -74,7 +75,9 @@ interface Colors {
                 else attr.getDrawable(R.styleable.KeyboardView_spacebarNoBorderBackground)
             }
             ACTION_KEY_BACKGROUND -> {
-                if (themeStyle == STYLE_HOLO && hasKeyBorders) // no borders has a very small pressed drawable otherwise
+                if (themeStyle == STYLE_NEXTBOARD)
+                    attr.getDrawable(R.styleable.KeyboardView_spacebarBackground)
+                else if (themeStyle == STYLE_HOLO && hasKeyBorders) // no borders has a very small pressed drawable otherwise
                     attr.getDrawable(R.styleable.KeyboardView_functionalKeyBackground)
                 else
                     attr.getDrawable(R.styleable.KeyboardView_keyBackground)
@@ -222,7 +225,14 @@ class DynamicColors(context: Context, override val themeStyle: String, override 
             if (themeStyle == STYLE_HOLO) colorFilter(adjustedBackground)
             else colorFilter(keyBackground)
 
-        if (hasKeyBorders) {
+        if (hasKeyBorders && themeStyle == STYLE_NEXTBOARD) {
+            // Immediate state tint only; no animation or shape/geometry change while pressed.
+            backgroundStateList = nextBoardPressedState(background, keyText)
+            keyStateList = nextBoardPressedState(keyBackground, keyText)
+            functionalKeyStateList = nextBoardPressedState(if (isNight) doubleAdjustedKeyBackground else functionalKey, keyText)
+            actionKeyStateList = nextBoardPressedState(accent, nextBoardActionForeground(accent))
+            spaceBarStateList = nextBoardPressedState(spaceBar, keyText)
+        } else if (hasKeyBorders) {
             backgroundStateList =
                 if (!isNight) pressedStateList(adjustedFunctionalKey, background)
                 else pressedStateList(adjustedKeyBackground, background)
@@ -269,6 +279,7 @@ class DynamicColors(context: Context, override val themeStyle: String, override 
         keyTextFilter = colorFilter(keyText)
 
         actionKeyIconColorFilter = when {
+            themeStyle == STYLE_NEXTBOARD -> colorFilter(nextBoardActionForeground(accent))
             themeStyle == STYLE_HOLO -> keyTextFilter
             // the white icon may not have enough contrast, and can't be adjusted by the user
             isBrightColor(accent) -> colorFilter(Color.DKGRAY)
@@ -296,7 +307,8 @@ class DynamicColors(context: Context, override val themeStyle: String, override 
         CLIPBOARD_SUGGESTION_BACKGROUND -> keyBackground
         NAVIGATION_BAR -> navBar
         MORE_SUGGESTIONS_HINT, SUGGESTED_WORD, SUGGESTION_TYPED_WORD, SUGGESTION_VALID_WORD -> adjustedKeyText
-        ACTION_KEY_ICON, TOOL_BAR_EXPAND_KEY -> Color.WHITE
+        ACTION_KEY_ICON -> if (themeStyle == STYLE_NEXTBOARD) nextBoardActionForeground(accent) else Color.WHITE
+        TOOL_BAR_EXPAND_KEY -> Color.WHITE
     }
 
     override fun setColor(drawable: Drawable, color: ColorType) {
@@ -448,7 +460,13 @@ class DefaultColors (
         }
 
         adjustedBackgroundFilter = colorFilter(adjustedBackground)
-        if (hasKeyBorders) {
+        if (hasKeyBorders && themeStyle == STYLE_NEXTBOARD) {
+            backgroundStateList = nextBoardPressedState(background, keyText)
+            keyStateList = nextBoardPressedState(keyBackground, keyText)
+            functionalKeyStateList = nextBoardPressedState(functionalKey, keyText)
+            actionKeyStateList = nextBoardPressedState(accent, nextBoardActionForeground(accent))
+            spaceBarStateList = nextBoardPressedState(spaceBar, keyText)
+        } else if (hasKeyBorders) {
             backgroundStateList = pressedStateList(brightenOrDarken(background, true), background)
             keyStateList = if (themeStyle == STYLE_HOLO) pressedStateList(keyBackground, keyBackground)
                 else pressedStateList(brightenOrDarken(keyBackground, true), keyBackground)
@@ -468,6 +486,7 @@ class DefaultColors (
         }
         keyTextFilter = colorFilter(keyText)
         actionKeyIconColorFilter = when {
+            themeStyle == STYLE_NEXTBOARD -> colorFilter(nextBoardActionForeground(accent))
             themeStyle == STYLE_HOLO -> keyTextFilter
             // the white icon may not have enough contrast, and can't be adjusted by the user
             isBrightColor(accent) -> colorFilter(Color.DKGRAY)
@@ -495,7 +514,7 @@ class DefaultColors (
         NAVIGATION_BAR -> navBar
         SUGGESTION_AUTO_CORRECT, EMOJI_CATEGORY, TOOL_BAR_KEY, TOOL_BAR_EXPAND_KEY, ONE_HANDED_MODE_BUTTON -> suggestionText
         MORE_SUGGESTIONS_HINT, SUGGESTED_WORD, SUGGESTION_TYPED_WORD, SUGGESTION_VALID_WORD -> adjustedSuggestionText
-        ACTION_KEY_ICON -> Color.WHITE
+        ACTION_KEY_ICON -> if (themeStyle == STYLE_NEXTBOARD) nextBoardActionForeground(accent) else Color.WHITE
     }
 
     override fun setColor(drawable: Drawable, color: ColorType) {
@@ -609,6 +628,15 @@ class AllColors(private val colorMap: EnumMap<ColorType, Int>, override val them
 private fun colorFilter(color: Int, mode: BlendModeCompat = BlendModeCompat.MODULATE): ColorFilter {
     // using !! for the color filter because null is only returned for unsupported blend modes, which are not used
     return BlendModeColorFilterCompat.createBlendModeColorFilterCompat(color, mode)!!
+}
+
+private fun nextBoardPressedState(normal: Int, foreground: Int) =
+    pressedStateList(ColorUtils.blendARGB(normal, foreground, 0.12f), normal)
+
+private fun nextBoardActionForeground(accent: Int) = when {
+    ColorUtils.calculateContrast(Color.DKGRAY, accent or -0x1000000) >= 4.5 -> Color.DKGRAY
+    ColorUtils.calculateContrast(Color.WHITE, accent or -0x1000000) >= 4.5 -> Color.WHITE
+    else -> Color.BLACK
 }
 
 private fun pressedStateList(pressed: Int, normal: Int): ColorStateList {

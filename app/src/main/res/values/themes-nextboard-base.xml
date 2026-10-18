@@ -24,19 +24,19 @@
     <style name="KeyboardView.NextBoard_Base" parent="KeyboardView.Rounded_Base">
         <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
         <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
-        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_pill_nextboard</item>
     </style>
 
     <style name="MainKeyboardView.NextBoard_Base" parent="MainKeyboardView.Rounded_Base">
         <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
         <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
-        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_pill_nextboard</item>
     </style>
 
     <style name="EmojiPalettesView.NextBoard_Base" parent="EmojiPalettesView.Rounded_Base">
         <item name="keyBackground">@drawable/btn_keyboard_key_nextboard</item>
         <item name="functionalKeyBackground">@drawable/btn_keyboard_key_functional_nextboard</item>
-        <item name="spacebarBackground">@drawable/btn_keyboard_key_nextboard</item>
+        <item name="spacebarBackground">@drawable/btn_keyboard_key_pill_nextboard</item>
     </style>
 
     <style name="ClipboardHistoryView.NextBoard_Base" parent="ClipboardHistoryView.Rounded_Base">

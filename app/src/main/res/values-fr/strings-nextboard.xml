@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<resources>
+    <string name="apply_nextboard_style">Appliquer le style NextBoard</string>
+    <string name="nextboard_style_summary">Touches arrondies avec fond et choix de couleurs</string>
+    <string name="nextboard_style_description">Active le style NextBoard et les bordures des touches. Choisissez les couleurs des modes clair et sombre. Le réglage jour/nuit, les dispositions et les tailles restent tels que configurés.</string>
+    <string name="nextboard_style_apply">Appliquer</string>
+    <string name="nextboard_style_preview">Formes et couleurs des touches</string>
+    <string name="nextboard_style_dark_preview">Aperçu des couleurs sombres</string>
+    <string name="nextboard_style_tones">Tons NextBoard</string>
+    <string name="nextboard_style_wallpaper">Couleurs du fond d’écran</string>
+    <string name="nextboard_style_keep">Conserver mes couleurs</string>
+</resources>
