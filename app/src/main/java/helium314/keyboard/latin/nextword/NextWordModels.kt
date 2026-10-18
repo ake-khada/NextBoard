@@ -9,6 +9,7 @@ import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.InputTypeUtils
 import helium314.keyboard.latin.utils.Log
 import java.io.IOException
+import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
@@ -28,7 +29,7 @@ object NextWordModels {
 
     private val supportedLanguages = setOf("en", "fr", "ru")
     private val models = ConcurrentHashMap<String, NextWordModel>()
-    private val unavailableLanguages = ConcurrentHashMap.newKeySet<String>()
+    private val unavailableLanguages = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
     private val loadLock = Any()
     private val sourceDictionary = Dictionary.PhonyDictionary(TYPE_NEXT_WORD)
 
