@@ -5,6 +5,7 @@ import helium314.keyboard.latin.NgramContext
 import helium314.keyboard.latin.NgramContext.WordInfo
 import java.io.File
 import java.nio.file.Files
+import java.text.Normalizer
 import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,16 +49,38 @@ class NextWordModelTest {
         assertFailsWith<NextWordModelFormatException> { NextWordModel.fromFile(truncated) }
     }
 
+    @Test
+    fun canonicalAccentsAndRussianYoUseTheSameKeys() {
+        for ((locale, words) in listOf(Locale.FRENCH to listOf("CAFÉ", "DÉJÀ", "L’HÔTEL"),
+            Locale.forLanguageTag("ru") to listOf("ЕЩЁ", "ВСЁ"))) {
+            for (word in words) {
+                assertEquals(NextWordModel.normalizeKey(word, locale),
+                    NextWordModel.normalizeKey(Normalizer.normalize(word, Normalizer.Form.NFD), locale))
+            }
+        }
+        assertEquals("все", NextWordModel.normalizeKey("ВСЕ\u0308", Locale.forLanguageTag("ru")))
+    }
+
+    @Test
+    fun bundledFrenchModelAcceptsDecomposedAccents() {
+        val model = NextWordModel.fromFile(File(repositoryRoot, "app/src/main/assets/nextword/fr.nwlm"))
+        val canonical = model.predict(NgramContext(WordInfo("déjà")), Locale.FRENCH)
+        assertTrue(canonical.isNotEmpty())
+        assertEquals(canonical, model.predict(NgramContext(WordInfo("de\u0301ja\u0300")), Locale.FRENCH))
+    }
+
     companion object {
-        private val tinyFixture: File by lazy {
+        private val repositoryRoot: File by lazy {
             val workingDirectory = System.getProperty("user.dir") ?: error("missing user.dir")
-            val root = generateSequence(File(workingDirectory).absoluteFile) { it.parentFile }
+            generateSequence(File(workingDirectory).absoluteFile) { it.parentFile }
                 .firstOrNull { File(it, "tools/lm/build_model.py").isFile }
                 ?: error("could not locate repository root")
+        }
+        private val tinyFixture: File by lazy {
             val output = Files.createTempFile("tiny-nextword", ".nwlm").toFile()
             val process = ProcessBuilder(
                 "python3",
-                File(root, "tools/lm/build_model.py").absolutePath,
+                File(repositoryRoot, "tools/lm/build_model.py").absolutePath,
                 "--tiny",
                 "--output",
                 output.absolutePath

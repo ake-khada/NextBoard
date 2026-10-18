@@ -9,6 +9,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.text.Normalizer
 import java.util.Locale
 
 internal data class NextWordCandidate(val word: String, val score: Int)
@@ -242,7 +243,7 @@ internal class NextWordModel private constructor(private val buffer: ByteBuffer)
         }
 
         internal fun normalizeKey(word: String, locale: Locale): String {
-            var normalized = word.replace('\u2019', '\'').lowercase(locale)
+            var normalized = Normalizer.normalize(word.replace('\u2019', '\'').lowercase(locale), Normalizer.Form.NFC)
             if (locale.language == "ru") normalized = normalized.replace('ё', 'е')
             return normalized
         }

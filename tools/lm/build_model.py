@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import struct
 import sys
+import unicodedata
 from typing import BinaryIO, Iterable, Iterator, TextIO
 
 
@@ -125,14 +126,14 @@ def xxhash64(data: bytes, seed: int = 0) -> int:
 
 
 def normalize_key(token: str, language: str) -> str:
-    normalized = token.replace("\u2019", "'").lower()
+    normalized = unicodedata.normalize("NFC", token.replace("\u2019", "'").lower())
     if language == "ru":
         normalized = normalized.replace("ё", "е")
     return normalized
 
 
 def normalize_surface(token: str) -> str:
-    return token.replace("\u2019", "'")
+    return unicodedata.normalize("NFC", token.replace("\u2019", "'"))
 
 
 def splitmix64(value: int) -> int:
@@ -147,7 +148,7 @@ def is_held_out(sentence_index: int, modulus: int, seed: int) -> bool:
 
 
 def tokenize_sentences(text: str) -> Iterator[list[str]]:
-    text = html.unescape(HTML_TAG_RE.sub(" ", text))
+    text = unicodedata.normalize("NFC", html.unescape(HTML_TAG_RE.sub(" ", text)))
     for fragment in SENTENCE_SPLIT_RE.split(text):
         tokens = [normalize_surface(match.group(0)) for match in TOKEN_RE.finditer(fragment)]
         if tokens:
