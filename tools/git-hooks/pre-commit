@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(git rev-parse --show-toplevel)"
+if [[ ! -x .toolchains/python/bin/python3 || ! -x .toolchains/gitleaks/gitleaks ]]; then
+    printf '%s\n' 'Missing project privacy tools. Provision the pinned local Python and Gitleaks tools before committing.' >&2
+    exit 1
+fi
+.toolchains/python/bin/python3 -B tools/privacy/check_public_tree.py --index-only --commit-identities
+exec .toolchains/gitleaks/gitleaks git --staged --redact=100 --no-banner --no-color
