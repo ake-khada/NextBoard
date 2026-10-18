@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""Constrain ordinary ADB commands to the owned emulator and isolated server."""
+import json
+import os
+from pathlib import Path
+import sys
+
+root = Path(__file__).resolve().parents[3]
+cfg = json.loads((root / '.local/dev.json').read_text())
+port = str(cfg['adb_port'])
+mode = os.environ.get('NEXTBOARD_SANDBOX')
+serial = cfg['phone']['serial'] if mode == 'phone' else f"emulator-{cfg['emulator_port']}"
+if mode not in ('device', 'phone') or port == '5037':
+    sys.exit('ADB is available only inside the device sandbox')
+if os.environ.get('ANDROID_ADB_SERVER_PORT') != port:
+    sys.exit('Unexpected ADB environment')
+args = sys.argv[1:]
+expected = {'-P': port, '-s': serial, '-H': '127.0.0.1', '-L': f'tcp:localhost:{port}'}
+index = 0
+while index < len(args) and args[index].startswith('-'):
+    option = args[index]
+    if option not in expected or index + 1 >= len(args) or args[index + 1] != expected[option]:
+        sys.exit('Unexpected ADB target or option')
+    index += 2
+command = args[index:]
+if not command or command[0] in ('connect', 'disconnect', 'kill-server', 'start-server', 'tcpip', 'usb'):
+    sys.exit('Use the managed emulator lifecycle')
+if command != ['server', 'nodaemon'] and '-s' not in args[:index]:
+    sys.exit('An exact emulator serial is required')
+binary = Path(os.environ['ANDROID_HOME']) / 'platform-tools/adb'
+os.execv(binary, [str(binary), *args])
