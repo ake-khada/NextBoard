@@ -32,6 +32,7 @@ import helium314.keyboard.keyboard.Keyboard;
 import helium314.keyboard.keyboard.KeyboardElement;
 import helium314.keyboard.keyboard.KeyboardLayoutSet;
 import helium314.keyboard.keyboard.KeyboardSwitcher;
+import helium314.keyboard.keyboard.emoji.RecentEmojis;
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode;
 import helium314.keyboard.latin.CapsMode;
 import helium314.keyboard.latin.dictionary.Dictionary;
@@ -351,6 +352,11 @@ public final class InputLogic {
         mConnection.endBatchEdit();
         // Don't allow cancellation of manual pick
         mLastComposedWord.deactivate();
+
+        if (suggestionInfo.isEmoji()) {
+            RecentEmojis.add(suggestion);
+        }
+
         // Space state must be updated before calling updateShiftState
         if (settingsValues.mAutospaceAfterSuggestion)
             mSpaceState = SpaceState.PHANTOM;
@@ -604,7 +610,7 @@ public final class InputLogic {
                 // after typing some letters and a period, then gesturing; the keyboard is not in
                 // caps mode yet, but since a gesture is starting, it should go in caps mode,
                 // unless the user explicitly said it should not.
-                keyboardSwitcher.requestUpdatingShiftState(getCurrentAutoCapsState(settingsValues), getCurrentRecapitalizeState());
+                keyboardSwitcher.updateShiftState(getCurrentAutoCapsState(settingsValues), getCurrentRecapitalizeState());
             }
         }
         mConnection.endBatchEdit();
@@ -2344,7 +2350,7 @@ public final class InputLogic {
         // Space state must be updated before calling updateShiftState
         if (settingsValues.mAutospaceAfterGestureTyping)
             mSpaceState = SpaceState.PHANTOM;
-        keyboardSwitcher.requestUpdatingShiftState(getCurrentAutoCapsState(settingsValues), getCurrentRecapitalizeState());
+        keyboardSwitcher.updateShiftState(getCurrentAutoCapsState(settingsValues), getCurrentRecapitalizeState());
 
         if (isInlineEmojiSearchAction()) {
             searchForEmojiInline(SuggestedWords.NOT_A_SEQUENCE_NUMBER, mLatinIME::setSuggestions);

@@ -546,4 +546,8 @@
     <string name="gesture_data_swipe_o_scope">Nástroj na vizualizáciu údajov o gestách: &lt;a href=%s&gt;Swipe-O-Scope&lt;/a&gt;</string>
     <string name="layout_dpad" tools:keep="@string/layout_dpad">D-pad</string>
     <string name="space_swipe_toggle_dpad_entry">Prepnúť D-pad</string>
+    <string name="show_dpad_key">klávesa D-pad</string>
+    <string name="recent_emojis_cleared">Vyčistené nedávne emodži</string>
+    <string name="prefs_enable_hardware_keyboard">Podpora hardvérovej klávesnice</string>
+    <string name="accent_shifted_icon">Ikona klávesy Shift s zvýraznením</string>
 </resources>

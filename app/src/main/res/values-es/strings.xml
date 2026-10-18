@@ -546,4 +546,8 @@
     <string name="subtype_tok">Toki Pona</string>
     <string name="layout_dpad" tools:keep="@string/layout_dpad">Cruceta</string>
     <string name="space_swipe_toggle_dpad_entry">Alternar cruceta</string>
+    <string name="show_dpad_key">Botón de la cruceta</string>
+    <string name="recent_emojis_cleared">Borrados los emojis recientes</string>
+    <string name="prefs_enable_hardware_keyboard">Compatibilidad con teclado físico</string>
+    <string name="accent_shifted_icon">Icono de mayúsculas resaltado</string>
 </resources>

@@ -23,7 +23,6 @@ import helium314.keyboard.latin.common.Constants
 import helium314.keyboard.latin.common.InputPointers
 import helium314.keyboard.latin.common.combiningRange
 import helium314.keyboard.latin.common.moveStepsToCharCount
-import helium314.keyboard.latin.define.ProductionFlags
 import helium314.keyboard.latin.inputlogic.InputLogic
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.BackgroundGatheringCache
@@ -69,7 +68,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
 
     override fun onKeyUp(keyCode: Int, keyEvent: KeyEvent): Boolean {
         emojiAltPhysicalKeyDetector.onKeyUp(keyEvent)
-        if (!ProductionFlags.IS_HARDWARE_KEYBOARD_SUPPORTED)
+        if (!settings.current.mEnableHardwareKeyboard)
             return false
 
         val keyIdentifier = keyEvent.deviceId.toLong() shl 32 + keyEvent.keyCode
@@ -78,7 +77,7 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
 
     override fun onKeyDown(keyCode: Int, keyEvent: KeyEvent): Boolean {
         emojiAltPhysicalKeyDetector.onKeyDown(keyEvent)
-        if (!ProductionFlags.IS_HARDWARE_KEYBOARD_SUPPORTED)
+        if (!settings.current.mEnableHardwareKeyboard)
             return false
 
         val event: Event

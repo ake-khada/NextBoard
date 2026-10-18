@@ -99,7 +99,7 @@
     <string name="ime_settings">HeliBoard-Einstellungen</string>
     <string name="settings_category_experimental">Experimentell</string>
     <string name="settings_no_limit">Keine Begrenzung</string>
-    <string name="abbreviation_unit_minutes">%s Min.</string>
+    <string name="abbreviation_unit_minutes">%s min</string>
     <string name="spell_checker_service_name">HeliBoard-Rechtschreibprüfung</string>
     <string name="show_emoji_key">Emoji-Taste</string>
     <string name="settings_category_input">Eingabe</string>
@@ -459,7 +459,7 @@
     <string name="timestamp_description">Du kannst die Zeitstempel-Taste über ein benutzerdefiniertes Layout mit der Taste \'timestamp\' oder den Keycode -10043 hinzufügen</string>
     <string name="floating" tools:keep="@string/floating">Schwebende Tastatur</string>
     <string name="prefs_key_gap_scale">Tastenabstand</string>
-    <string name="prefs_bottom_row_scale">Größe der unteren Zeile</string>
+    <string name="prefs_bottom_row_scale">Untere Zeilengröße</string>
     <string name="prefs_hint_font_scale">Schriftgrad der Tasten-Hinweise</string>
     <string name="subtype_tok">Toki Pona</string>
     <string name="subtype_generic_4row">%s (4-zeilig)</string>
@@ -546,4 +546,6 @@
     <string name="gesture_data_add_key">Symbolleisten-Taste hinzufügen</string>
     <string name="gesture_data_no_known_dict">Die Hintergrund-Erfassung sammelt nur Wörter aus Wörterbüchern, die integriert oder im &lt;a href=%s&gt;Wörterbuch-Repository&lt;/a&gt; verfügbar sind. Derzeit hast du kein solches Wörterbuch aktiviert.</string>
     <string name="gesture_data_swipe_o_scope">Werkzeug zur Visualisierung von Gestendaten: &lt;a href=%s&gt;Swipe-O-Scope&lt;/a&gt;</string>
+    <string name="show_dpad_key">Steuerkreuztaste</string>
+    <string name="recent_emojis_cleared">Zuletzt verwendete Emojis gelöscht</string>
 </resources>

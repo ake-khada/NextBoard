@@ -132,7 +132,11 @@ private fun dictsAvailable(locale: Locale, context: Context): Boolean {
 
 // sorting by display name is still slow, even with the cache... but probably good enough
 private fun getSortedSubtypes(context: Context): List<InputMethodSubtype> {
-    val systemLocales = SubtypeSettings.getSystemLocales()
+    val availableSubtypes = SubtypeSettings.getAllAvailableSubtypes()
+    val availableLocales = availableSubtypes.mapTo(HashSet()) { it.locale() }
+    val systemLocales = SubtypeSettings.getSystemLocales().map {
+        LocaleUtils.getBestMatch(it, availableLocales) { st -> st }
+    }
     val enabledSubtypes = SubtypeSettings.getEnabledSubtypes(true)
     val localesWithDictionary = DictionaryInfoUtils.getCacheDirectories(context).mapNotNull { dir ->
         if (dir.list()?.any { it.endsWith(DictionaryInfoUtils.USER_DICTIONARY_SUFFIX) } == true)
@@ -149,7 +153,7 @@ private fun getSortedSubtypes(context: Context): List<InputMethodSubtype> {
     val subtypeSortComparator = compareBy<InputMethodSubtype>(
         { it !in enabledSubtypes },
         { it.locale() !in localesWithDictionary },
-        { it.locale() !in systemLocales},
+        { it.locale() !in systemLocales },
         { !(SubtypeSettings.isAdditionalSubtype(it) && !isDefaultSubtype(it) ) },
         {
             @Suppress("DEPRECATION")
@@ -158,7 +162,7 @@ private fun getSortedSubtypes(context: Context): List<InputMethodSubtype> {
         },
         { it.displayName() }
     )
-    return SubtypeSettings.getAllAvailableSubtypes().sortedWith(subtypeSortComparator)
+    return availableSubtypes.sortedWith(subtypeSortComparator)
 }
 
 @Preview

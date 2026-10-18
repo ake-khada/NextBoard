@@ -70,8 +70,8 @@
     <string name="setup_welcome_title">Добро пожаловать в %s</string>
     <string name="setup_welcome_additional_description">с непрерывным вводом</string>
     <string name="setup_start_action">Начать работу</string>
-    <string name="setup_steps_title">Настроить %s</string>
-    <string name="setup_step1_title">Включить %s</string>
+    <string name="setup_steps_title">Настройка %s</string>
+    <string name="setup_step1_title">Включение %s</string>
     <string name="setup_step1_instruction">Убедитесь, что приложение \"%s\" включено в настройках языка и ввода. Это позволит ему работать на вашем устройстве.</string>
     <string name="setup_step1_action">Включить в настройках</string>
     <string name="setup_step2_title">Переключитесь на %s</string>
@@ -101,7 +101,7 @@
     <string name="prefs_narrow_key_gaps">Увеличенные клавиши</string>
     <string name="prefs_keyboard_height_scale">Масштаб высоты клавиатуры</string>
     <string name="url_detection_title">Обнаружение URL-адресов</string>
-    <string name="url_detection_summary">Попытаться обнаружить URL-адреса и схожие конструкции как единое целое</string>
+    <string name="url_detection_summary">Пытаться определить URL-адреса и схожие конструкции как единое целое</string>
     <string name="delete_swipe">Удаление смахиванием</string>
     <string name="delete_swipe_summary">Смахните от клавиши удаления, чтобы выделить и сразу удалить большие фрагменты текста</string>
     <string name="backup_restore_title">Резервное копирование и восстановление</string>
@@ -135,7 +135,7 @@
     <string name="theme_colors_night">Цвета (ночная тема)</string>
     <string name="day_night_mode_summary">Внешний вид будет соответствовать настройкам системы</string>
     <string name="autospace_after_punctuation_summary">Автоматически вставлять пробел после знаков препинания при наборе нового слова</string>
-    <string name="enable_clipboard_history_summary">Если отключено, клавиша буфера обмена вставит содержимое буфера обмена, если оно есть</string>
+    <string name="enable_clipboard_history_summary">Если отключено, клавиша буфера обмена вставит содержимое буфера обмена, при его наличии</string>
     <string name="autospace_after_punctuation">Пробел автоматически после знаков препинания</string>
     <string name="prefs_long_press_keyboard_to_change_lang">Изменять метод ввода с помощью пробела</string>
     <string name="settings_category_experimental">Экспериментальные</string>
@@ -546,4 +546,8 @@
     <string name="subtype_tok">Токи пона</string>
     <string name="layout_dpad" tools:keep="@string/layout_dpad">D-pad</string>
     <string name="space_swipe_toggle_dpad_entry">Переключить D-pad</string>
+    <string name="show_dpad_key">Клавиша D-pad</string>
+    <string name="recent_emojis_cleared">Недавние эмодзи очищены</string>
+    <string name="prefs_enable_hardware_keyboard">Поддержка аппаратной клавиатуры</string>
+    <string name="accent_shifted_icon">Акцентный цвет иконки Shift</string>
 </resources>
