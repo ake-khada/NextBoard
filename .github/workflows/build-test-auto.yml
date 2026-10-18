@@ -24,7 +24,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          # Robolectric's Android 36 runtime requires Java 21; app bytecode stays at 17.
+          java-version: '21'
           distribution: 'temurin'
 
       - uses: gradle/actions/setup-gradle@v3
