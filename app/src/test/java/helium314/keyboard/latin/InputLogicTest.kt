@@ -17,6 +17,7 @@ import helium314.keyboard.ShadowLocaleManagerCompat
 import helium314.keyboard.event.Event
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.keyboard.MainKeyboardView
+import helium314.keyboard.keyboard.emoji.RecentEmojis
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode
 import helium314.keyboard.latin.ShadowFacilitator2.Companion.lastAddedWord
 import helium314.keyboard.latin.SuggestedWords.SuggestedWordInfo
@@ -159,6 +160,31 @@ class InputLogicTest {
         latinIME.switchToSubtype(ko)
         chainInput("ㅂㄱㅑ")
         assertEquals("ㅂ갸", text)
+    }
+
+    @Test fun emojiSuggestionsUpdateRecentsInOrdinaryFields() {
+        RecentEmojis.set(listOf("🙂"))
+        pickSuggestion("🤗")
+        assertEquals(listOf("🤗", "🙂"), RecentEmojis.get())
+    }
+
+    @Test fun emojiSuggestionsAndSearchRespectPrivateFields() {
+        RecentEmojis.set(listOf("🙂"))
+        setText("", EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+        pickSuggestion("🤗")
+        RecentEmojis.add("😎") // same entry point used by emoji search
+        assertEquals(listOf("🙂"), RecentEmojis.get())
+    }
+
+    @Test fun emojiRecentsRespectPasswordAndExplicitIncognito() {
+        RecentEmojis.set(listOf("🙂"))
+        setInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+        RecentEmojis.add("🤗")
+        assertEquals(listOf("🙂"), RecentEmojis.get())
+        latinIME.prefs().edit { putBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, true) }
+        setInputType(InputType.TYPE_CLASS_TEXT)
+        RecentEmojis.addCodepoint(0x1F60E)
+        assertEquals(listOf("🙂"), RecentEmojis.get())
     }
 
     @Test fun emojiHangul() {
@@ -836,7 +862,8 @@ class InputLogicTest {
     }
 
     // just sets the text and starts input so connection it set up correctly
-    private fun setText(newText: String) {
+    private fun setText(newText: String, imeOptions: Int = 0) {
+        ShadowInputMethodService.currentImeOptions = imeOptions
         ShadowInputMethodService.text = newText
         selectionStart = newText.length
         selectionEnd = selectionStart
@@ -847,6 +874,7 @@ class InputLogicTest {
         // restarting is false, so this is seen as a new text field
         val ei = EditorInfo()
         ei.inputType = currentInputType
+        ei.imeOptions = imeOptions
         latinIME.mHandler.onStartInput(ei, false)
         latinIME.mHandler.onStartInputView(ei, false)
         handleMessages() // this is important so the composing span is set correctly

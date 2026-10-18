@@ -19,6 +19,10 @@ object RecentEmojis {
     @JvmStatic
     fun add(emoji: String) {
         if (emoji.isEmpty()) return
+        // Suggestions and emoji search share this store with the emoji palette.
+        // Apply the same no-learning policy at every entry point.
+        val settings = Settings.getValues() ?: return
+        if (settings.mIncognitoModeEnabled || settings.mInputAttributes.mIsPasswordField) return
         val recents = get()
         recents.removeAll { it == emoji }
         recents.add(0, emoji)
