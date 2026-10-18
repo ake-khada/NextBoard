@@ -35,6 +35,8 @@ The default candidate thresholds are eight for bigrams and four for trigrams. If
 
 Tokenization keeps Unicode letters, with ASCII apostrophe, U+2019, and hyphen allowed only inside a token. Periods, exclamation points, question marks, and newlines split sentences. Keys are lowercased, U+2019 is folded to ASCII apostrophe, and Russian `ё` is folded to `е` in keys while the most frequent candidate surface form is retained.
 
+Input is normalized to NFC before tokenization, and the Kotlin reader also normalizes context keys to NFC. Decomposed accents therefore resolve to the same context without changing text in the editor. Run the synthetic tooling regressions with `python3 -m unittest discover -s tools/lm -p 'test_*.py'`.
+
 ## Reproducibility check
 
 Build the same inputs twice and compare the bytes:
@@ -77,3 +79,19 @@ The fixed split seed is `0x4E574C4D`; `--holdout-modulus 200` assigns approximat
 | ru | 2,843,773 | 8 / 12 | 13.8996% | 23.1018% | `189cb7f07c943970f5a35ce9ce2efed9291be3428d9db4b40ca1fa091ca50f4e` |
 
 All model files remain below 3 MiB. English clears the 28% top-3 gate; French and Russian clear their 22% gates.
+
+## Static candidate ordering
+
+The runtime keeps model order (specific context before backoff) within its existing score band of 1–96. Previously quantization ties let the suggestion comparator prefer shorter or alphabetically earlier words. Ranking now reserves one score step per remaining candidate, with at most three candidates per language. No larger model, additional dictionary lookup, or correction-threshold change is involved. Display predictions use a separate cache entry from the native context used by autocorrection.
+
+`eval_model.py --order static` evaluates this score conversion; `--order legacy-static` reproduces the previous comparator order. The default `--order model` keeps historical raw-model evaluation. `--locale-weight` can exercise the locale-weight conversion. These modes evaluate **static candidates only**, not their later merge with native dictionaries or personal history.
+
+Re-evaluation of the unchanged assets on the original 50,000 held-out sentences per language gives:
+
+| Language | Events | Previous static top-1 | Preserved-order top-1 | Top-3 (unchanged) |
+| --- | ---: | ---: | ---: | ---: |
+| en | 274,678 | 16.5761% | 16.6249% | 28.4482% |
+| fr | 256,268 | 15.7203% | 15.7507% | 27.3222% |
+| ru | 245,877 | 13.8378% | 13.8996% | 23.1018% |
+
+The comparison freezes the original tokenizer's held-out partition before applying NFC, so a tokenizer change cannot move examples between training and evaluation. This recovers 364 top-one hits across 776,823 events; it is an ordering fix, not a newly trained model. The sentence-level subtitle split can contain repeated or closely related material across partitions. These numbers do not measure mixed-language correction, native/history merging, or typing latency. Native suggestions can still outrank these static candidates.
