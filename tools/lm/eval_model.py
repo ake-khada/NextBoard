@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 from dataclasses import dataclass
 from pathlib import Path
 import struct
@@ -120,6 +121,24 @@ class Model:
         return result
 
 
+def rank_predictions(candidates: list[Candidate], order: str, locale_weight: float = 1.0) -> list[Candidate]:
+    """Mirror the static score band and SuggestionResults comparator, not native merging."""
+    if order == 'model':
+        return candidates
+    scores = [max(1, math.floor(max(1, c.score * 96 // 255) * locale_weight + 0.5))
+              for c in candidates]
+    if order == 'static':
+        ceiling = 96
+        for index, score in enumerate(scores):
+            scores[index] = min(ceiling, max(len(scores) - index, score))
+            ceiling = scores[index] - 1
+    elif order != 'legacy-static':
+        raise ValueError('Unknown prediction order')
+    # Java compares code-point count, then UTF-16 strings, when scores tie.
+    return [candidate for candidate, score in sorted(zip(candidates, scores),
+        key=lambda item: (-item[1], len(item[0].word), item[0].word.encode('utf-16-be')))]
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True, type=Path)
@@ -129,9 +148,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-sentences", type=int, default=0)
     parser.add_argument("--holdout-modulus", type=int, help="evaluate the fixed-seed 1/N sentence partition")
     parser.add_argument("--split-seed", type=int, default=DEFAULT_SPLIT_SEED)
+    parser.add_argument("--order", choices=('model', 'static', 'legacy-static'), default='model',
+                        help="raw model order or static candidates after score conversion (excludes native/history merging)")
+    parser.add_argument("--locale-weight", type=float, default=1.0)
     args = parser.parse_args(argv)
     if args.sentences <= 0 or args.skip_sentences < 0:
         parser.error("sentence counts must be positive")
+    if not math.isfinite(args.locale_weight) or not 0 <= args.locale_weight <= 1:
+        parser.error("--locale-weight must be between zero and one")
     if args.holdout_modulus is not None and args.holdout_modulus < 2:
         parser.error("--holdout-modulus must be at least 2")
     if args.holdout_modulus is not None and args.skip_sentences:
@@ -172,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
             break
         previous: list[str] = []
         for expected in sentence:
-            predictions = model.predict(previous)
+            predictions = rank_predictions(model.predict(previous), args.order, args.locale_weight)
             expected_key = normalize_key(expected, model.language)
             predicted_keys = [normalize_key(candidate.word, model.language) for candidate in predictions]
             event_count += 1
@@ -188,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
     if sentence_count == 0 or event_count == 0:
         raise ValueError("no held-out sentences were evaluated")
     print(f"model={args.model} language={model.language} bytes={args.model.stat().st_size}")
+    print(f"order={args.order} locale_weight={args.locale_weight}")
     print(f"sentences={sentence_count} events={event_count} coverage={covered_count / event_count:.4%}")
     print(f"top1={top1_hits / event_count:.4%} ({top1_hits}/{event_count})")
     print(f"top3={top3_hits / event_count:.4%} ({top3_hits}/{event_count})")

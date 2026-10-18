@@ -45,11 +45,21 @@ object NextWordModels {
         }
         val language = locale.language.lowercase(Locale.ROOT)
         val model = getModel(context, language) ?: return emptyList()
-        return model.predict(ngramContext, locale).map { candidate ->
+        return rankCandidates(model.predict(ngramContext, locale), localeWeight)
+    }
+
+    internal fun rankCandidates(candidates: List<NextWordCandidate>, localeWeight: Float): List<SuggestedWordInfo> {
+        var ceiling = STATIC_SCORE_CEILING
+        return candidates.mapIndexed { index, candidate ->
+            // Quantization and locale weights can tie scores. Reserve one step for each
+            // remaining candidate so the native comparator cannot undo model/backoff order.
+            val score = scoreNextWordCandidate(candidate.score, localeWeight)
+                .coerceIn(candidates.size - index, ceiling)
+            ceiling = score - 1
             SuggestedWordInfo(
                 candidate.word,
                 "",
-                scoreNextWordCandidate(candidate.score, localeWeight),
+                score,
                 SuggestedWordInfo.KIND_PREDICTION,
                 sourceDictionary,
                 SuggestedWordInfo.NOT_AN_INDEX,
