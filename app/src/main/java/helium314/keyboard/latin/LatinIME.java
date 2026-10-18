@@ -1756,8 +1756,6 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onEmojiSearchDone(Intent intent) {
-        Log.d(EmojiSearchActivityKt.TAG, "after activity closing. isEmojiSearch: " + isEmojiSearch() + ". Intent: " + intent +
-                (intent != null ? ". imeClosed: " + isImeClosed(intent) + ". selected emoji: " + getSelectedEmoji(intent) : ""));
         if (intent != null && EmojiSearchActivity.EMOJI_SEARCH_DONE_ACTION.equals(intent.getAction()) && ! isEmojiSearch()) {
             if (isImeClosed(intent)) {
                 requestHideSelf(0);
@@ -1772,10 +1770,6 @@ public class LatinIME extends InputMethodService implements
 
     private static boolean isImeClosed(Intent intent) {
         return intent.getBooleanExtra(EmojiSearchActivity.IME_CLOSED_KEY, false);
-    }
-
-    private static String getSelectedEmoji(Intent intent) {
-        return intent.getStringExtra(EmojiSearchActivity.EMOJI_KEY);
     }
 
     public boolean isEmojiSearch() {
