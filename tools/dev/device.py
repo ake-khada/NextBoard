@@ -12,6 +12,40 @@ import sys
 import time
 
 
+def verify_identity(result, expected):
+    names = [line.strip() for line in result.stdout.splitlines()
+             if line.strip() and line.strip() != 'OK']
+    if result.returncode or names != [expected]:
+        raise RuntimeError(
+            f'Cannot verify emulator identity: exit={result.returncode}, '
+            f'stdout={result.stdout!r}, stderr={result.stderr!r}')
+
+
+def wait_for_server(process, port):
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError('Owned ADB server exited; inspect the private ADB log')
+        try:
+            with socket.create_connection(('127.0.0.1', int(port)), timeout=1) as connection:
+                connection.sendall(b'000chost:version')
+                response = b''
+                while len(response) < 12:
+                    part = connection.recv(12 - len(response))
+                    if not part:
+                        raise OSError('ADB readiness connection closed')
+                    response += part
+                if response[:8] != b'OKAY0004':
+                    raise RuntimeError(f'Unexpected owned ADB readiness response: {response!r}')
+                int(response[8:], 16)
+                if process.poll() is not None:
+                    raise RuntimeError('Owned ADB exited during readiness check')
+                return
+        except OSError:
+            time.sleep(0.1)
+    raise RuntimeError('Owned ADB server did not become ready within 15 seconds')
+
+
 def main():
     if os.environ.get('NEXTBOARD_SANDBOX') != 'device':
         sys.exit('Device lifecycle requires the device sandbox')
@@ -23,6 +57,13 @@ def main():
         with socket.socket() as check:
             check.bind(('127.0.0.1', value))  # Fail on unknown services, even inside this namespace.
     avd = Path(os.environ['ANDROID_AVD_HOME']) / (cfg['avd'] + '.ini')
+    if 'device_preflight' in cfg:
+        preflight = cfg['device_preflight']
+        if (not isinstance(preflight, list) or not preflight
+                or not all(isinstance(arg, str) for arg in preflight) or not preflight[0]):
+            raise ValueError('device_preflight must be a nonempty list of strings '
+                             'with a nonempty executable argument')
+        subprocess.run(preflight, check=True, timeout=180)
     if not avd.exists():
         image = next(p for p in cfg['sdk_packages'] if p.startswith('system-images;'))
         subprocess.run(['avdmanager', 'create', 'avd', '-n', cfg['avd'], '-k', image,
@@ -34,9 +75,7 @@ def main():
                                 'server', 'nodaemon'], stdout=adb_log, stderr=subprocess.STDOUT)
         emulator = None
         try:
-            time.sleep(0.5)
-            if adb.poll() is not None:
-                raise RuntimeError('Owned ADB server did not start')
+            wait_for_server(adb, port)
             emulator = subprocess.Popen([
                 'emulator', '-avd', cfg['avd'], '-port', str(cfg['emulator_port']),
                 '-no-window', '-no-audio', '-no-snapshot', '-no-boot-anim',
@@ -46,20 +85,21 @@ def main():
             client = ['adb', '-P', port, '-s', serial]
             deadline = time.monotonic() + 180
             while time.monotonic() < deadline:
-                if emulator.poll() is not None:
-                    raise RuntimeError('Emulator exited before boot; inspect the private emulator log')
+                if emulator.poll() is not None or adb.poll() is not None:
+                    raise RuntimeError('Owned device process exited before boot; inspect the private logs')
                 status = subprocess.run([*client, 'shell', 'getprop', 'sys.boot_completed'],
                                         capture_output=True, timeout=10)
-                if status.stdout.strip() == b'1':
+                if status.returncode == 0 and status.stdout.strip() == b'1':
                     break
                 time.sleep(1)
             else:
                 raise RuntimeError('Emulator boot timed out')
-            name = subprocess.check_output([*client, 'emu', 'avd', 'name'], text=True).splitlines()[0]
-            if name != cfg['avd']:
-                raise RuntimeError('Unexpected emulator identity')
+            identity = subprocess.run([*client, 'emu', 'avd', 'name'],
+                                      capture_output=True, text=True, timeout=15)
+            verify_identity(identity, cfg['avd'])
             # The command inherits an exact serial; scripts must still use -s explicitly.
-            env = dict(os.environ, ANDROID_SERIAL=serial)
+            env = dict(os.environ, ANDROID_SERIAL=serial,
+                       NEXTBOARD_ADB_PID=str(adb.pid), NEXTBOARD_EMULATOR_PID=str(emulator.pid))
             print('Owned emulator booted in offline namespace', flush=True)
             return subprocess.run(sys.argv[1:], env=env).returncode
         finally:

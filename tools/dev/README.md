@@ -39,6 +39,14 @@ explicitly to ADB, for example:
 adb -P "$ANDROID_ADB_SERVER_PORT" -s "$ANDROID_SERIAL" shell getprop ro.build.version.sdk
 ```
 
+An optional `device_preflight` in local configuration runs inside the device
+sandbox before launch, with a three-minute deadline. When present, it must be a
+nonempty list of strings with a nonempty executable argument. Omit the field to
+skip this check. Invalid configuration or a failed check prevents ADB and emulator
+launch. Use it for local maintenance checks. Device commands also receive the
+namespace-local `NEXTBOARD_ADB_PID` and `NEXTBOARD_EMULATOR_PID` of their owned
+lifecycle processes, allowing maintenance tools to verify process ownership.
+
 The ADB wrapper rejects a default port, foreign target, remote connection, and
 unmanaged server lifecycle. Every device session has its own network namespace;
 its loopback sockets cannot reach host ADB services. Servers are stopped by their
@@ -64,6 +72,7 @@ quota or a guarantee against resource contention.
 
 Run `.toolchains/python/bin/python3 -I tools/dev/test_isolation.py` to exercise
 real namespaces with synthetic foreign files and an ephemeral host listener.
+Run `./dev -- python3 -I tools/dev/test_device.py` for preflight and identity checks.
 Run the privacy gate before staging. Never commit local configuration, keys,
 device records, logs, screenshots or performance measurements. The existing
 release signing configuration is for local testing, not public distribution.
